@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getClientIp, isPrivateOrLocalIp } from "@/lib/client-ip";
 import { geolocateIp } from "@/lib/ip-geolocation";
 import { canScanCheckIn } from "@/lib/permissions";
+import { verifySignedQrPayload } from "@/lib/qr-code-salt";
 import {
   normalizeQrToken,
   type CheckInResult,
@@ -83,9 +84,12 @@ export async function POST(request: Request) {
     };
 
     const eventId = parseEventId(body.eventId);
-    const qrToken = normalizeQrToken(
-      typeof body.qrToken === "string" ? body.qrToken : "",
-    );
+    const rawPayload =
+      typeof body.qrToken === "string" ? body.qrToken.trim() : "";
+    const signedPayload = normalizeQrToken(rawPayload);
+    const qrToken = signedPayload
+      ? verifySignedQrPayload(signedPayload)
+      : null;
 
     if (!eventId || !qrToken) {
       return NextResponse.json(

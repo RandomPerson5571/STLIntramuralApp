@@ -7,11 +7,9 @@ import {
   type ScanEventRow,
 } from "@/lib/mappers/scan";
 import { throwIfError } from "@/lib/queries/utils";
+import { isSignedQrPayload } from "@/lib/qr-code-format";
 import type { ScanEventOption, ScanRecentEntry, ScanResultPreview } from "@/lib/scan-data";
 import type { User } from "@/types/database";
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export type CheckInStatus =
   | "success"
@@ -41,8 +39,8 @@ export class ScanCheckInError extends Error {
 }
 
 export function normalizeQrToken(raw: string): string | null {
-  const token = raw.trim();
-  return UUID_RE.test(token) ? token : null;
+  const payload = raw.trim();
+  return isSignedQrPayload(payload) ? payload : null;
 }
 
 export function toScanResultPreview(result: CheckInResult): ScanResultPreview {

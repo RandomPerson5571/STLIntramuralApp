@@ -7,6 +7,7 @@ import CheckInQRCode from "@/components/qrcode/CheckInQRCode";
 import MaterialSymbol from "@/components/events/MaterialSymbol";
 import { WidgetErrorState } from "@/components/dashboard/DashboardWidget";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useQrCodePayload } from "@/hooks/useQrCodePayload";
 import { formatDisplayName } from "@/lib/constants/leaderboard";
 import {
   downloadQrAsPng,
@@ -21,6 +22,12 @@ function formatQrLabel(token: string): string {
 export default function QRCodeContent() {
   const qrRef = useRef<HTMLDivElement>(null);
   const { data: user, isPending, isError, refetch } = useCurrentUser();
+  const {
+    data: qrPayload,
+    isPending: payloadPending,
+    isError: payloadError,
+    refetch: refetchPayload,
+  } = useQrCodePayload();
 
   const qrToken = user?.qr_code_token ?? "";
   const displayName = user ? formatDisplayName(user) : "Student";
@@ -30,17 +37,17 @@ export default function QRCodeContent() {
 
   const handleDownloadPng = () => {
     const svg = getSvgElement();
-    if (!svg || !qrToken) return;
+    if (!svg || !qrPayload) return;
     downloadQrAsPng(svg, studentQrCodeFilename(displayName, qrToken, "png"));
   };
 
   const handleDownloadSvg = () => {
     const svg = getSvgElement();
-    if (!svg || !qrToken) return;
+    if (!svg || !qrPayload) return;
     downloadQrAsSvg(svg, studentQrCodeFilename(displayName, qrToken, "svg"));
   };
 
-  if (isPending) {
+  if (isPending || payloadPending) {
     return (
       <div className={containerClass}>
         <div className="animate-pulse rounded-2xl border border-surface-variant/40 bg-surface-container-lowest p-lg">
@@ -57,7 +64,7 @@ export default function QRCodeContent() {
     );
   }
 
-  if (isError || !user || !qrToken) {
+  if (isError || payloadError || !user || !qrToken || !qrPayload) {
     return (
       <div className={containerClass}>
         <div className="rounded-2xl border border-surface-variant/40 bg-surface-container-lowest p-lg">
@@ -65,6 +72,7 @@ export default function QRCodeContent() {
             message="We could not load your check-in code."
             onRetry={() => {
               void refetch();
+              void refetchPayload();
             }}
           />
           <div className="mt-md flex flex-wrap justify-center gap-xs">
@@ -105,7 +113,7 @@ export default function QRCodeContent() {
               className="relative aspect-square w-full max-w-[320px] rounded-2xl bg-white p-5 shadow-[0_8px_32px_rgba(0,48,174,0.12),0_2px_8px_rgba(26,28,31,0.08),inset_0_1px_0_rgba(255,255,255,1)] ring-2 ring-primary/15"
             >
               <CheckInQRCode
-                token={qrToken}
+                token={qrPayload}
                 size={512}
                 title={`${displayName} check-in QR code`}
               />

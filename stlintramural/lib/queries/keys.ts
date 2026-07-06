@@ -2,6 +2,7 @@ export const queryKeys = {
   auth: { session: ["auth", "session"] as const },
   users: {
     me: ["users", "me"] as const,
+    qrPayload: ["users", "qr-payload"] as const,
     byQr: (token: string) => ["users", "qr", token] as const,
   },
   events: {
