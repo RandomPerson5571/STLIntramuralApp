@@ -1,3 +1,5 @@
+import { resolveLucideIcon } from "@/lib/icon-map";
+
 interface MaterialSymbolProps {
   icon: string;
   filled?: boolean;
@@ -9,11 +11,14 @@ export default function MaterialSymbol({
   filled = false,
   className = "",
 }: MaterialSymbolProps) {
+  const LucideIcon = resolveLucideIcon(icon);
+
   return (
-    <span
-      className={`material-symbols-outlined ${filled ? "fill" : ""} ${className}`}
-    >
-      {icon}
-    </span>
+    <LucideIcon
+      className={`shrink-0 ${className}`}
+      aria-hidden
+      fill={filled ? "currentColor" : "none"}
+      strokeWidth={filled ? 1.75 : 2}
+    />
   );
 }
