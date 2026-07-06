@@ -1,10 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import StlLogo from "@/components/StlLogo";
 import MaterialSymbol from "@/components/events/MaterialSymbol";
-import { SIDE_NAV_ITEMS } from "@/lib/navigation";
+import { useSignOut } from "@/hooks/useAuth";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { formatDisplayName } from "@/lib/constants/leaderboard";
+import { canScanCheckIn } from "@/lib/permissions";
+import {
+  ADMIN_NAV_ITEM,
+  SIDE_NAV_ITEMS,
+  TEACHER_SCAN_NAV_ITEM,
+} from "@/lib/navigation";
 
 const PRIMARY_NAV = SIDE_NAV_ITEMS.slice(0, 2);
 const SECONDARY_NAV = SIDE_NAV_ITEMS.slice(2);
@@ -55,6 +63,18 @@ function NavLink({
 
 export default function EventsSideNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const signOut = useSignOut();
+  const { data: user, isPending: userPending } = useCurrentUser();
+  const displayName = user ? formatDisplayName(user) : "Player";
+  const pointsLabel = userPending
+    ? "…"
+    : `${(user?.points_balance ?? 0).toLocaleString()} pts`;
+
+  const handleSignOut = async () => {
+    await signOut.mutateAsync();
+    router.push("/login");
+  };
 
   return (
     <nav className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col border-r border-surface-variant/60 bg-gradient-to-b from-surface-bright via-surface to-surface-container-low/40 shadow-[4px_0_24px_rgba(26,28,31,0.04)] backdrop-blur-sm lg:flex">
@@ -85,6 +105,32 @@ export default function EventsSideNav() {
         {SECONDARY_NAV.map((item) => (
           <NavLink key={item.label} item={item} isActive={pathname === item.href} />
         ))}
+
+        {!userPending && canScanCheckIn(user) && (
+          <>
+            <div className="my-3 h-px bg-surface-variant/80" />
+            <p className="mb-1 px-3 text-label-sm font-label-sm uppercase tracking-widest text-outline">
+              Staff
+            </p>
+            <NavLink
+              item={TEACHER_SCAN_NAV_ITEM}
+              isActive={pathname === TEACHER_SCAN_NAV_ITEM.href}
+            />
+          </>
+        )}
+
+        {!userPending && user?.is_admin && (
+          <>
+            <div className="my-3 h-px bg-surface-variant/80" />
+            <p className="mb-1 px-3 text-label-sm font-label-sm uppercase tracking-widest text-outline">
+              Admin
+            </p>
+            <NavLink
+              item={ADMIN_NAV_ITEM}
+              isActive={pathname === ADMIN_NAV_ITEM.href}
+            />
+          </>
+        )}
       </div>
 
       <div className="border-t border-surface-variant/60 p-sm">
@@ -93,11 +139,23 @@ export default function EventsSideNav() {
             <MaterialSymbol icon="person" className="text-lg" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-body-md font-body-md text-on-surface">Player</p>
+            <p className="truncate text-body-md font-body-md text-on-surface">
+              {displayName}
+            </p>
             <p className="truncate text-label-sm font-label-sm text-on-surface-variant">
-              1,240 pts
+              {pointsLabel}
             </p>
           </div>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={signOut.isPending}
+            aria-label={signOut.isPending ? "Signing out" : "Log out"}
+            title={signOut.isPending ? "Signing out" : "Log out"}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-on-surface-variant transition-[transform,background-color,color] duration-200 hover:bg-surface-container-high hover:text-on-surface active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <MaterialSymbol icon="logout" className="text-lg" />
+          </button>
         </div>
       </div>
     </nav>

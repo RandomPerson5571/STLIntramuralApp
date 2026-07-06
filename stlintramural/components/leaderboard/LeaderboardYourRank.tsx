@@ -4,17 +4,20 @@ import { motion } from "framer-motion";
 import MaterialSymbol from "@/components/events/MaterialSymbol";
 import {
   formatFullName,
-  LEADERBOARD_TOTAL,
   type LeaderboardEntry,
-} from "@/lib/leaderboard-data";
+} from "@/lib/constants/leaderboard";
 
 interface LeaderboardYourRankProps {
   entry: LeaderboardEntry;
+  totalPlayers: number;
 }
 
-export default function LeaderboardYourRank({ entry }: LeaderboardYourRankProps) {
+export default function LeaderboardYourRank({
+  entry,
+  totalPlayers,
+}: LeaderboardYourRankProps) {
   const percentile = Math.round(
-    ((LEADERBOARD_TOTAL - entry.rank + 1) / LEADERBOARD_TOTAL) * 100,
+    ((totalPlayers - entry.rank + 1) / totalPlayers) * 100,
   );
 
   return (

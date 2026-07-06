@@ -1,5 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { mapEventToItem, type EventQueryRow } from "@/lib/mappers/event";
+import { throwIfError } from "@/lib/queries/utils";
+import type { UpcomingMatch } from "@/lib/constants/dashboard";
+
 export interface WeeklyActivityDay {
   day: string;
   games: number;
@@ -50,9 +54,7 @@ export async function fetchWeeklyActivity(
     .not("attended_at", "is", null)
     .gte("attended_at", rangeStart.toISOString());
 
-  if (error) {
-    throw error;
-  }
+  throwIfError(error);
 
   const counts = new Map<string, number>();
 
@@ -69,23 +71,49 @@ export async function fetchWeeklyActivity(
   }));
 }
 
-export async function fetchCheckInsThisMonth(
+export async function fetchUpcomingRegisteredEvents(
   supabase: SupabaseClient,
   userId: string,
-): Promise<number> {
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  limit = 3,
+): Promise<UpcomingMatch[]> {
+  const now = new Date().toISOString();
 
-  const { count, error } = await supabase
+  const { data: attendances, error: attendanceError } = await supabase
     .from("event_attendances")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .not("attended_at", "is", null)
-    .gte("attended_at", startOfMonth.toISOString());
+    .select("event_id")
+    .eq("user_id", userId);
 
-  if (error) {
-    throw error;
+  if (attendanceError) {
+    throw attendanceError;
   }
 
-  return count ?? 0;
+  const eventIds = (attendances ?? []).map((row) => row.event_id);
+  if (eventIds.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("events")
+    .select(
+      "*, host:users!host_id(id, first_name, last_name, role), attendances:event_attendances(count)",
+    )
+    .in("id", eventIds)
+    .gte("start_date", now)
+    .order("start_date", { ascending: true })
+    .limit(limit);
+
+  throwIfError(error);
+
+  return (data ?? []).map((row, index) => {
+    const item = mapEventToItem(row as EventQueryRow, { index, isRegistered: true });
+
+    return {
+      id: item.id,
+      opponent: item.title,
+      sport: item.sport,
+      dateTime: item.dateTime,
+      location: item.location,
+      accentColor: item.accentColor,
+    };
+  });
 }

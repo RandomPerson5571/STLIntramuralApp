@@ -1,7 +1,7 @@
 "use client";
 
 import type { TimePeriod } from "@/types/event";
-import { TIME_PERIODS } from "@/lib/events-data";
+import { TIME_PERIODS } from "@/lib/constants/event-filters";
 import MaterialSymbol from "@/components/events/MaterialSymbol";
 
 interface TimePeriodSelectProps {

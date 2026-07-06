@@ -1,10 +1,15 @@
 "use client";
 
 import DashboardWidget from "@/components/dashboard/DashboardWidget";
-import { LEAGUE_RANK, LEAGUE_TOTAL } from "@/lib/dashboard-data";
+import { useLeagueRank } from "@/hooks/useDashboard";
 
 export default function LeagueRankWidget({ index }: { index: number }) {
-  const percentile = Math.round(((LEAGUE_TOTAL - LEAGUE_RANK + 1) / LEAGUE_TOTAL) * 100);
+  const { data: leagueRank, isPending, isError, refetch } = useLeagueRank();
+
+  const rank = leagueRank?.rank ?? 0;
+  const total = leagueRank?.total ?? 0;
+  const percentile =
+    total > 0 ? Math.round(((total - rank + 1) / total) * 100) : 0;
 
   return (
     <DashboardWidget
@@ -13,25 +18,33 @@ export default function LeagueRankWidget({ index }: { index: number }) {
       accentColor="primary"
       variant="dark"
       index={index}
+      isLoading={isPending}
+      isError={isError}
+      errorMessage="Could not load your league rank."
+      onRetry={() => void refetch()}
     >
       <div className="flex items-baseline gap-1">
         <span className="text-[clamp(2.5rem,6vw,3.5rem)] font-display-xl leading-none text-on-primary">
-          #{LEAGUE_RANK}
+          #{rank || "—"}
         </span>
-        <span className="text-body-md text-on-primary/70">/ {LEAGUE_TOTAL}</span>
+        {total > 0 && (
+          <span className="text-body-md text-on-primary/70">/ {total}</span>
+        )}
       </div>
-      <div className="mt-sm space-y-1.5">
-        <div className="flex justify-between text-label-sm font-label-sm uppercase text-on-primary/70">
-          <span>Top {100 - percentile + 1}%</span>
-          <span>{percentile}th percentile</span>
+      {total > 0 && (
+        <div className="mt-sm space-y-1.5">
+          <div className="flex justify-between text-label-sm font-label-sm uppercase text-on-primary/70">
+            <span>Top {100 - percentile + 1}%</span>
+            <span>{percentile}th percentile</span>
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-white/15">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-secondary-container to-on-primary"
+              style={{ width: `${percentile}%` }}
+            />
+          </div>
         </div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-white/15">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-secondary-container to-on-primary"
-            style={{ width: `${percentile}%` }}
-          />
-        </div>
-      </div>
+      )}
     </DashboardWidget>
   );
 }

@@ -1,15 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { throwIfError } from "@/lib/queries/utils";
 import type { User } from "@/types/database";
 
 const CURRENT_USER_COLUMNS =
-  "id, auth_id, first_name, last_name, role, points_balance, qr_code_token, created_at" as const;
+  "id, auth_id, first_name, last_name, role, is_admin, points_balance, qr_code_token, created_at, graduation_year" as const;
 
 export async function fetchCurrentUser(
   supabase: SupabaseClient,
 ): Promise<User | null> {
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  throwIfError(sessionError);
+
+  const user = session?.user;
 
   if (!user) {
     return null;
@@ -21,9 +27,7 @@ export async function fetchCurrentUser(
     .eq("auth_id", user.id)
     .maybeSingle();
 
-  if (error) {
-    throw error;
-  }
+  throwIfError(error);
 
   return data;
 }

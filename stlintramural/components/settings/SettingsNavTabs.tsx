@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import MaterialSymbol from "@/components/events/MaterialSymbol";
-import type { SettingsTab, SettingsTabItem } from "@/lib/settings-data";
+import type { SettingsTab, SettingsTabItem } from "@/lib/constants/settings-nav";
 
 interface SettingsNavTabsProps {
   tabs: SettingsTabItem[];

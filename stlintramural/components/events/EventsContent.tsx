@@ -1,50 +1,44 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import MaterialSymbol from "@/components/events/MaterialSymbol";
 import EventsGrid from "@/components/events/EventsGrid";
-import LoadMoreButton from "@/components/events/LoadMoreButton";
 import SportFilterBar from "@/components/events/SportFilterBar";
+import ContentSkeleton from "@/components/ui/ContentSkeleton";
+import EmptyState from "@/components/ui/EmptyState";
+import PaginationBar from "@/components/ui/PaginationBar";
+import QueryErrorBlock from "@/components/ui/QueryErrorBlock";
 import TimePeriodSelect from "@/components/events/TimePeriodSelect";
 import { useEvents } from "@/hooks/useEvents";
+import { STAT_SHADE } from "@/lib/constants/stat-shade";
+import { DEFAULT_EVENTS_PAGE_SIZE } from "@/lib/queries/events";
 import type { SportFilter, TimePeriod } from "@/types/event";
-
-const STAT_SHADE = {
-  primary: {
-    bg: "from-primary/[0.06] to-surface-container-lowest",
-    shadow: "shadow-[0_2px_8px_rgba(26,28,31,0.04),0_6px_24px_-4px_rgba(0,48,174,0.12)]",
-    hover: "hover:shadow-[0_4px_12px_rgba(26,28,31,0.05),0_12px_32px_-4px_rgba(0,48,174,0.18)]",
-    icon: "text-primary bg-primary/[0.1]",
-    border: "border-primary/10 hover:border-primary/20",
-  },
-  secondary: {
-    bg: "from-secondary/[0.06] to-surface-container-lowest",
-    shadow: "shadow-[0_2px_8px_rgba(26,28,31,0.04),0_6px_24px_-4px_rgba(0,102,136,0.12)]",
-    hover: "hover:shadow-[0_4px_12px_rgba(26,28,31,0.05),0_12px_32px_-4px_rgba(0,102,136,0.18)]",
-    icon: "text-secondary bg-secondary/[0.1]",
-    border: "border-secondary/10 hover:border-secondary/20",
-  },
-};
 
 export default function EventsContent() {
   const [activeFilter, setActiveFilter] = useState<SportFilter>("All Sports");
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>("This Week");
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>("Upcoming");
+  const [page, setPage] = useState(0);
 
-  const {
-    data,
-    isPending,
-    isError,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useEvents({ sport: activeFilter, period: timePeriod });
+  const { data, isPending, isFetching, isError, error, refetch } = useEvents({
+    sport: activeFilter,
+    period: timePeriod,
+    page,
+  });
 
-  const events = useMemo(
-    () => data?.pages.flatMap((page) => page.events) ?? [],
-    [data],
-  );
+  const events = data?.events ?? [];
+  const totalCount = data?.totalCount ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / DEFAULT_EVENTS_PAGE_SIZE));
+
+  const handleFilterChange = (filter: SportFilter) => {
+    setActiveFilter(filter);
+    setPage(0);
+  };
+
+  const handlePeriodChange = (period: TimePeriod) => {
+    setTimePeriod(period);
+    setPage(0);
+  };
 
   const openCount = events.filter((e) => e.status === "registration-open").length;
   const waitlistCount = events.filter((e) => e.status === "waitlist-only").length;
@@ -53,7 +47,7 @@ export default function EventsContent() {
     {
       icon: "event",
       label: "Showing",
-      value: String(events.length),
+      value: String(totalCount),
       suffix: "events",
       accent: "primary" as const,
     },
@@ -74,8 +68,8 @@ export default function EventsContent() {
     {
       icon: "calendar_month",
       label: "Period",
-      value: timePeriod.split(" ")[1] ?? timePeriod,
-      suffix: timePeriod.split(" ")[0] ?? "",
+      value: timePeriod === "Upcoming" ? "Upcoming" : (timePeriod.split(" ")[1] ?? timePeriod),
+      suffix: timePeriod === "Upcoming" ? "" : (timePeriod.split(" ")[0] ?? ""),
       accent: "secondary" as const,
     },
   ];
@@ -149,54 +143,36 @@ export default function EventsContent() {
         <div className="relative flex flex-col gap-sm md:flex-row md:items-center md:justify-between">
           <SportFilterBar
             activeFilter={activeFilter}
-            onFilterChange={setActiveFilter}
+            onFilterChange={handleFilterChange}
           />
-          <TimePeriodSelect value={timePeriod} onChange={setTimePeriod} />
+          <TimePeriodSelect value={timePeriod} onChange={handlePeriodChange} />
         </div>
       </motion.div>
 
       {isPending ? (
-        <div className="grid grid-cols-1 gap-sm md:grid-cols-2 md:gap-md xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-96 animate-pulse rounded-2xl bg-surface-container-high"
-            />
-          ))}
-        </div>
+        <ContentSkeleton variant="card-grid" />
       ) : isError ? (
-        <div className="rounded-2xl border border-error/20 bg-error-container/30 px-md py-lg text-center">
-          <MaterialSymbol
-            icon="error_outline"
-            className="mb-2 text-display-md text-error"
-          />
-          <p className="text-body-lg text-on-surface">
-            Could not load events. Please try again.
-          </p>
-          {error instanceof Error && (
-            <p className="mt-1 text-body-md text-on-surface-variant">
-              {error.message}
-            </p>
-          )}
-        </div>
+        <QueryErrorBlock
+          title="Could not load events. Please try again."
+          detail={error instanceof Error ? error.message : undefined}
+          onRetry={() => void refetch()}
+        />
       ) : events.length === 0 ? (
-        <div className="rounded-2xl border border-surface-variant/70 bg-surface-container-lowest px-md py-lg text-center">
-          <MaterialSymbol
-            icon="event_busy"
-            className="mb-2 text-display-md text-outline"
-          />
-          <p className="text-body-lg text-on-surface">No events for this period.</p>
-          <p className="mt-1 text-body-md text-on-surface-variant">
-            Try a different sport filter or time range.
-          </p>
-        </div>
+        <EmptyState
+          icon="event_busy"
+          title="No events for this period."
+          description="Try a different sport filter or time range."
+        />
       ) : (
         <>
           <EventsGrid events={events} />
-          <LoadMoreButton
-            onClick={() => fetchNextPage()}
-            hasMore={!!hasNextPage}
-            isLoading={isFetchingNextPage}
+          <PaginationBar
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            isLoading={isFetching}
+            animated
+            className="mt-md sm:mt-lg"
           />
         </>
       )}

@@ -69,7 +69,7 @@ function hasGraduated(graduationYear: number, referenceDate: Date): boolean {
   return graduationYear < year || (graduationYear === year && month >= 6);
 }
 
-function calculateGrade(graduationYear: number, referenceDate: Date): number {
+export function calculateGrade(graduationYear: number, referenceDate: Date): number {
   const month = referenceDate.getMonth();
   const academicYearEnd = getAcademicYearEnd(referenceDate);
   const summerOffset = month >= 6 && month <= 7 ? 1 : 0;
@@ -208,12 +208,4 @@ export function parseYcdsbSignupEmail(
   }
 
   return parseStudentEmail(normalized, referenceDate);
-}
-
-/** @deprecated Use parseYcdsbSignupEmail with role "student" instead. */
-export function parseYcdsbEmail(
-  email: string,
-  referenceDate: Date = new Date(),
-) {
-  return parseYcdsbSignupEmail(email, "student", referenceDate);
 }

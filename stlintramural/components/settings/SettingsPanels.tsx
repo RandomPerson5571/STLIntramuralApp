@@ -1,23 +1,19 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 import MaterialSymbol from "@/components/events/MaterialSymbol";
+import { INPUT_CLASS } from "@/components/ui/form-styles";
 import SettingsRow from "@/components/settings/SettingsRow";
 import SettingsSectionCard from "@/components/settings/SettingsSectionCard";
+import { USER_ROLE_LABELS } from "@/lib/constants/user-labels";
 import type {
   AppPreferences,
   NotificationPreferences,
   PrivacyPreferences,
   SettingsTab,
   UserSettingsProfile,
-} from "@/lib/settings-data";
-
-const ROLE_LABELS: Record<UserSettingsProfile["role"], string> = {
-  student: "Student",
-  teacher: "Teacher",
-  admin: "Administrator",
-};
+} from "@/lib/constants/settings-nav";
 
 interface ProfilePanelProps {
   profile: UserSettingsProfile;
@@ -51,7 +47,7 @@ export function ProfilePanel({ profile, onProfileChange }: ProfilePanelProps) {
               {profile.firstName} {profile.lastName}
             </p>
             <p className="mt-0.5 text-label-sm font-label-sm text-on-surface-variant">
-              {ROLE_LABELS[profile.role]} · Member since {profile.memberSince}
+              {USER_ROLE_LABELS[profile.role]} · Member since {profile.memberSince}
             </p>
             <p className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-secondary/20 bg-secondary/[0.06] px-2.5 py-1 text-label-sm font-label-sm text-secondary">
               <MaterialSymbol icon="stars" className="text-sm" />
@@ -75,7 +71,7 @@ export function ProfilePanel({ profile, onProfileChange }: ProfilePanelProps) {
               type="text"
               value={profile.firstName}
               onChange={(e) => onProfileChange({ firstName: e.target.value })}
-              className="w-full rounded-xl border border-surface-variant/70 bg-surface px-3 py-3 text-body-md text-on-surface outline-none transition-[border-color,box-shadow] duration-200 focus:border-primary/40 focus:ring-2 focus:ring-primary/15"
+              className={INPUT_CLASS}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -90,7 +86,7 @@ export function ProfilePanel({ profile, onProfileChange }: ProfilePanelProps) {
               type="text"
               value={profile.lastName}
               onChange={(e) => onProfileChange({ lastName: e.target.value })}
-              className="w-full rounded-xl border border-surface-variant/70 bg-surface px-3 py-3 text-body-md text-on-surface outline-none transition-[border-color,box-shadow] duration-200 focus:border-primary/40 focus:ring-2 focus:ring-primary/15"
+              className={INPUT_CLASS}
             />
           </div>
           <div className="flex flex-col gap-1.5 sm:col-span-2">
@@ -110,7 +106,7 @@ export function ProfilePanel({ profile, onProfileChange }: ProfilePanelProps) {
                 type="email"
                 value={profile.email}
                 onChange={(e) => onProfileChange({ email: e.target.value })}
-                className="w-full rounded-xl border border-surface-variant/70 bg-surface py-3 pl-10 pr-3 text-body-md text-on-surface outline-none transition-[border-color,box-shadow] duration-200 focus:border-primary/40 focus:ring-2 focus:ring-primary/15"
+                className={`${INPUT_CLASS} py-3 pl-10 pr-3`}
               />
             </div>
           </div>
@@ -135,10 +131,10 @@ export function ProfilePanel({ profile, onProfileChange }: ProfilePanelProps) {
           <SettingsRow
             id="qr-code"
             label="QR Check-in Code"
-            description="View or regenerate your event check-in QR"
+            description="View your personal event check-in QR"
             action={
               <Link
-                href="/"
+                href="/qrcode"
                 className="shrink-0 rounded-xl border border-primary/20 bg-primary/[0.06] px-3 py-1.5 text-label-sm font-label-sm uppercase tracking-wider text-primary transition-[transform,background-color] duration-200 hover:bg-primary/[0.1] active:scale-[0.98]"
               >
                 View
@@ -356,9 +352,10 @@ export function PreferencesPanel({ preferences, onChange }: PreferencesPanelProp
 
 interface DangerZoneProps {
   onSignOut: () => void;
+  isSigningOut?: boolean;
 }
 
-export function DangerZone({ onSignOut }: DangerZoneProps) {
+export function DangerZone({ onSignOut, isSigningOut = false }: DangerZoneProps) {
   return (
     <motion.section
       initial={{ opacity: 0, y: 16 }}
@@ -389,9 +386,10 @@ export function DangerZone({ onSignOut }: DangerZoneProps) {
           <button
             type="button"
             onClick={onSignOut}
-            className="shrink-0 rounded-xl border border-error/30 bg-surface px-4 py-2 text-label-sm font-label-sm uppercase tracking-wider text-error transition-[transform,background-color] duration-200 hover:bg-error/[0.06] active:scale-[0.98]"
+            disabled={isSigningOut}
+            className="shrink-0 rounded-xl border border-error/30 bg-surface px-4 py-2 text-label-sm font-label-sm uppercase tracking-wider text-error transition-[transform,background-color] duration-200 hover:bg-error/[0.06] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Sign Out
+            {isSigningOut ? "Signing Out…" : "Sign Out"}
           </button>
         </div>
         <div className="h-px bg-error/10" />

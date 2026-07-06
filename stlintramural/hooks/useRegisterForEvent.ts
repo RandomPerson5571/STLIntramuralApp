@@ -7,6 +7,7 @@ import {
   registerForEvent,
 } from "@/lib/queries/events";
 import { invalidateAfterRegistration } from "@/lib/queries/cache";
+import { getMutationErrorMessage } from "@/lib/mutation-errors";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export function useRegisterForEvent() {
@@ -30,18 +31,10 @@ export function useRegisterForEvent() {
 }
 
 export function getRegistrationErrorMessage(error: unknown): string | null {
-  if (!error) return null;
-
-  if (error instanceof EventRegistrationError) {
-    if (error.code === "already_registered") {
-      return "Already registered";
-    }
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Registration failed. Please try again.";
+  return getMutationErrorMessage(error, {
+    DomainError: EventRegistrationError,
+    fallback: "Registration failed. Please try again.",
+    mapDomainError: (error) =>
+      error.code === "already_registered" ? "Already registered" : null,
+  });
 }

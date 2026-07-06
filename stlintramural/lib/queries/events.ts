@@ -1,6 +1,19 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { mapEventToItem, type EventQueryRow } from "@/lib/mappers/event";
+import {
+  toEventInsertPayload,
+  type CreateEventDraft,
+} from "@/lib/event-create-data";
+import {
+  mapEventToDetail,
+  mapEventToItem,
+  type EventDetailQueryRow,
+  type EventQueryRow,
+} from "@/lib/mappers/event";
+import { throwIfError } from "@/lib/queries/utils";
+import type { EventDetail } from "@/types/event-detail";
 import type { EventItem, SportFilter, TimePeriod } from "@/types/event";
+
+export { EventCreateError } from "@/lib/event-create-data";
 
 /** All event date filters use America/Chicago (CST/CDT). */
 export const EVENTS_TIMEZONE = "America/Chicago";
@@ -59,9 +72,9 @@ function addDays(date: Date, days: number): Date {
   return next;
 }
 
-export function getPeriodRange(period: TimePeriod): {
+function getPeriodRange(period: TimePeriod): {
   start: string;
-  end: string;
+  end?: string;
 } {
   const chicagoNow = chicagoCalendarDate();
   const year = chicagoNow.getFullYear();
@@ -74,6 +87,8 @@ export function getPeriodRange(period: TimePeriod): {
   const thisWeekEnd = addDays(thisWeekStart, 6);
 
   switch (period) {
+    case "Upcoming":
+      return { start: new Date().toISOString() };
     case "This Week":
       return {
         start: chicagoInstant(
@@ -131,9 +146,12 @@ export async function fetchEvents(
       { count: "exact" },
     )
     .gte("start_date", start)
-    .lte("start_date", end)
     .order("start_date", { ascending: true })
     .range(from, to);
+
+  if (end) {
+    query = query.lte("start_date", end);
+  }
 
   if (params.sport !== "All Sports") {
     const term = params.sport.replace(/[%_\\]/g, "\\$&");
@@ -142,9 +160,7 @@ export async function fetchEvents(
 
   const { data, error, count } = await query;
 
-  if (error) {
-    throw error;
-  }
+  throwIfError(error);
 
   const rows = (data ?? []) as EventQueryRow[];
   const registeredEventIds = params.registeredEventIds ?? new Set<string>();
@@ -173,9 +189,7 @@ export async function fetchMyEventAttendances(
     .select("event_id")
     .eq("user_id", userId);
 
-  if (error) {
-    throw error;
-  }
+  throwIfError(error);
 
   return new Set((data ?? []).map((row) => row.event_id));
 }
@@ -199,10 +213,112 @@ export async function registerForEvent(
     event_id: input.eventId,
   });
 
-  if (error) {
-    if (error.code === "23505") {
-      throw new EventRegistrationError("Already registered", "already_registered");
-    }
-    throw error;
+  if (error?.code === "23505") {
+    throw new EventRegistrationError("Already registered", "already_registered");
   }
+  throwIfError(error);
+}
+
+export async function createEvent(
+  supabase: SupabaseClient,
+  input: { hostId: string; draft: CreateEventDraft },
+): Promise<string> {
+  const payload = toEventInsertPayload(input.draft, input.hostId);
+
+  const { data, error } = await supabase
+    .from("events")
+    .insert(payload)
+    .select("id")
+    .single();
+
+  throwIfError(error);
+
+  if (!data) {
+    throw new Error("Expected event row after insert");
+  }
+
+  return data.id;
+}
+
+const EVENT_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export const EVENT_DETAIL_SELECT =
+  "*, host:users!host_id(id, first_name, last_name, role), attendances:event_attendances(count), tags(title)" as const;
+
+export async function fetchEventById(
+  supabase: SupabaseClient,
+  eventId: string,
+): Promise<EventQueryRow | null> {
+  const column = EVENT_UUID_RE.test(eventId) ? "id" : "slug";
+  const { data, error } = await supabase
+    .from("events")
+    .select(
+      "*, host:users!host_id(id, first_name, last_name, role), attendances:event_attendances(count)",
+    )
+    .eq(column, eventId)
+    .maybeSingle();
+
+  throwIfError(error);
+
+  return data as EventQueryRow | null;
+}
+
+export async function fetchEventDetailBySlug(
+  supabase: SupabaseClient,
+  slug: string,
+): Promise<EventDetailQueryRow | null> {
+  const { data, error } = await supabase
+    .from("events")
+    .select(EVENT_DETAIL_SELECT)
+    .eq("slug", slug)
+    .maybeSingle();
+
+  throwIfError(error);
+
+  return data as EventDetailQueryRow | null;
+}
+
+export async function fetchRelatedEvents(
+  supabase: SupabaseClient,
+  excludeSlug: string,
+  limit = 2,
+): Promise<EventDetail[]> {
+  const { data, error } = await supabase
+    .from("events")
+    .select(EVENT_DETAIL_SELECT)
+    .neq("slug", excludeSlug)
+    .gte("start_date", new Date().toISOString())
+    .order("start_date", { ascending: true })
+    .limit(limit);
+
+  throwIfError(error);
+
+  const rows = (data ?? []) as EventDetailQueryRow[];
+
+  return rows.map((row, index) =>
+    mapEventToDetail(row, { index, isRegistered: false }),
+  );
+}
+
+export async function fetchEventSlugs(
+  supabase: SupabaseClient,
+): Promise<{ slug: string; updated_at: string | null }[]> {
+  const { data, error } = await supabase
+    .from("events")
+    .select("slug, updated_at")
+    .order("start_date", { ascending: false });
+
+  throwIfError(error);
+
+  return data ?? [];
+}
+
+export async function deleteEvent(
+  supabase: SupabaseClient,
+  eventId: string,
+): Promise<void> {
+  const { error } = await supabase.from("events").delete().eq("id", eventId);
+
+  throwIfError(error);
 }

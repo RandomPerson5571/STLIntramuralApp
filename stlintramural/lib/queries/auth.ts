@@ -4,6 +4,7 @@ import {
   parseYcdsbSignupEmail,
   type YcdsbSignupRole,
 } from "@/lib/ycdsb-email";
+import { throwIfError } from "@/lib/queries/utils";
 
 export { getAuthErrorMessage } from "@/lib/auth-errors";
 
@@ -28,9 +29,7 @@ export async function getSession(
 ): Promise<Session | null> {
   const { data, error } = await supabase.auth.getSession();
 
-  if (error) {
-    throw error;
-  }
+  throwIfError(error);
 
   return data.session;
 }
@@ -44,9 +43,7 @@ export async function signIn(
     password,
   });
 
-  if (error) {
-    throw error;
-  }
+  throwIfError(error);
 
   return data;
 }
@@ -87,9 +84,7 @@ export async function signUp(
     },
   });
 
-  if (error) {
-    throw error;
-  }
+  throwIfError(error);
 
   if (data.user?.identities?.length === 0) {
     throw new Error("User already registered");
@@ -101,9 +96,7 @@ export async function signUp(
 export async function signOut(supabase: SupabaseClient) {
   const { error } = await supabase.auth.signOut();
 
-  if (error) {
-    throw error;
-  }
+  throwIfError(error);
 }
 
 export async function resetPassword(
@@ -114,7 +107,5 @@ export async function resetPassword(
     redirectTo,
   });
 
-  if (error) {
-    throw error;
-  }
+  throwIfError(error);
 }

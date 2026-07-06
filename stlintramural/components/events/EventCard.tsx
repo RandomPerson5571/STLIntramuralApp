@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import MaterialSymbol from "@/components/events/MaterialSymbol";
 import {
@@ -61,6 +62,11 @@ export default function EventCard({ event, index }: EventCardProps) {
       }}
       className={`group/card relative flex flex-col overflow-hidden rounded-2xl border bg-surface-container-lowest/95 backdrop-blur-sm transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-0.5 ${shade.card} ${shade.hover}`}
     >
+      <Link
+        href={`/events/${event.slug}`}
+        className="absolute inset-0 z-0 cursor-pointer rounded-2xl"
+        aria-label={`View ${event.title}`}
+      />
       <div
         className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${shade.glow}`}
         aria-hidden
@@ -70,7 +76,7 @@ export default function EventCard({ event, index }: EventCardProps) {
         aria-hidden
       />
 
-      <div className="relative h-44 overflow-hidden sm:h-48">
+      <div className="pointer-events-none relative h-44 overflow-hidden sm:h-48">
         {event.imageUrl ? (
           <Image
             src={event.imageUrl}
@@ -103,7 +109,7 @@ export default function EventCard({ event, index }: EventCardProps) {
         )}
       </div>
 
-      <div className="relative flex flex-1 flex-col p-sm sm:p-md">
+      <div className="pointer-events-none relative flex flex-1 flex-col p-sm sm:p-md">
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <span
             className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-label-sm font-label-sm uppercase ring-1 ${shade.badge}`}
@@ -118,7 +124,7 @@ export default function EventCard({ event, index }: EventCardProps) {
           ) : null}
         </div>
 
-        <h3 className="mb-sm text-headline-md font-headline-md uppercase text-on-surface">
+        <h3 className="mb-sm text-headline-md font-headline-md uppercase text-on-surface transition-colors group-hover/card:text-primary">
           {event.title}
         </h3>
 
@@ -137,13 +143,13 @@ export default function EventCard({ event, index }: EventCardProps) {
           </div>
         </div>
 
-        <div className="mt-auto flex flex-col gap-2">
+        <div className="pointer-events-auto relative z-10 mt-auto flex flex-col gap-2">
           <div className="flex gap-2">
             <button
               type="button"
               onClick={handleRegister}
               disabled={isRegistered || isRegistering}
-              className={`flex-1 rounded-xl py-2 text-label-sm font-label-sm uppercase transition-[transform,opacity,box-shadow,background-color] duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
+              className={`relative z-10 flex-1 rounded-xl py-2 text-label-sm font-label-sm uppercase transition-[transform,opacity,box-shadow,background-color] duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
                 isRegistered
                   ? "border-2 border-secondary bg-secondary/10 text-secondary"
                   : isWaitlist
@@ -156,7 +162,7 @@ export default function EventCard({ event, index }: EventCardProps) {
             <button
               type="button"
               aria-label="Set notification reminder"
-              className="flex items-center justify-center rounded-xl border-2 border-outline-variant px-3 text-on-surface transition-[transform,border-color,color] duration-200 hover:border-primary hover:text-primary active:scale-[0.98]"
+              className="relative z-10 flex items-center justify-center rounded-xl border-2 border-outline-variant px-3 text-on-surface transition-[transform,border-color,color] duration-200 hover:border-primary hover:text-primary active:scale-[0.98]"
             >
               <MaterialSymbol icon="notifications" />
             </button>

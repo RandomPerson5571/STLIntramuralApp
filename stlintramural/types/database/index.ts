@@ -13,8 +13,12 @@ export type {
   Event,
   EventUpdate,
   EventWithHost,
+  EventWithHostAndTags,
+  EventWithTags,
   NewEvent,
 } from "./event";
+
+export type { NewTag, Tag, TagUpdate, TagWithEvent } from "./tag";
 
 export type {
   EventAttendance,

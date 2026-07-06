@@ -7,8 +7,8 @@ function getAppOrigin(): string {
 }
 
 /** Absolute URL for Supabase email links (signup confirm, password reset). */
-export function getAuthCallbackUrl(next = "/"): string {
-  const safeNext = next.startsWith("/") ? next : "/";
+export function getAuthCallbackUrl(next = "/dashboard"): string {
+  const safeNext = next.startsWith("/") ? next : "/dashboard";
   const origin = getAppOrigin();
   return `${origin}/auth/callback?next=${encodeURIComponent(safeNext)}`;
 }

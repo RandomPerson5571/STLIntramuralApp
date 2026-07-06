@@ -1,5 +1,8 @@
+import { USER_ROLE_LABELS } from "@/lib/constants/user-labels";
+import { getAttendanceCount } from "@/lib/queries/utils";
 import type { EventWithHost } from "@/types/database";
 import type { AccentColor, EventAction, EventItem } from "@/types/event";
+import type { EventDetail } from "@/types/event-detail";
 
 /**
  * Recommended `events.description` formats for teachers (no schema change required):
@@ -15,6 +18,10 @@ import type { AccentColor, EventAction, EventItem } from "@/types/event";
 
 export interface EventQueryRow extends EventWithHost {
   attendances: { count: number }[];
+}
+
+export interface EventDetailQueryRow extends EventQueryRow {
+  tags: { title: string }[];
 }
 
 export interface MapEventOptions {
@@ -46,7 +53,7 @@ interface ParsedDescription {
   location: string;
 }
 
-function parseDescription(description: string | null): ParsedDescription {
+export function parseEventDescription(description: string | null): ParsedDescription {
   const defaults: ParsedDescription = {
     sport: "Event",
     format: "",
@@ -95,10 +102,6 @@ function parseDescription(description: string | null): ParsedDescription {
   }
 
   return defaults;
-}
-
-function getAttendanceCount(row: EventQueryRow): number {
-  return row.attendances?.[0]?.count ?? 0;
 }
 
 function isImageUrl(url: string): boolean {
@@ -151,11 +154,47 @@ function getAction(
   return { action: "register", actionLabel: "Register" };
 }
 
+function getDescriptionText(description: string | null): string {
+  if (!description?.trim()) {
+    return "No description provided.";
+  }
+
+  const trimmed = description.trim();
+  if (trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed) as { body?: string };
+      if (parsed.body?.trim()) return parsed.body.trim();
+    } catch {
+      // fall through
+    }
+    return "No description provided.";
+  }
+
+  const textSegments = trimmed
+    .split("|")
+    .map((segment) => segment.trim())
+    .filter((segment) => segment && !/^(sport|format|location)\s*:/i.test(segment));
+
+  if (textSegments.length > 0) {
+    return textSegments.join(" | ");
+  }
+
+  return "No description provided.";
+}
+
+function getHostName(host: EventQueryRow["host"]): string {
+  return `${host.first_name} ${host.last_name}`.trim();
+}
+
+function getHostRole(role: string): string {
+  return USER_ROLE_LABELS[role as keyof typeof USER_ROLE_LABELS] ?? role;
+}
+
 export function mapEventToItem(
   row: EventQueryRow,
   options: MapEventOptions,
 ): EventItem {
-  const { sport, format, location } = parseDescription(row.description);
+  const { sport, format, location } = parseEventDescription(row.description);
   const attendanceCount = getAttendanceCount(row);
   const status = getStatus(attendanceCount, row.max_attendees);
   const { action, actionLabel } = getAction(status, options.isRegistered);
@@ -164,6 +203,7 @@ export function mapEventToItem(
 
   return {
     id: row.id,
+    slug: row.slug,
     title: row.title,
     sport,
     format,
@@ -178,5 +218,26 @@ export function mapEventToItem(
     imageUrl,
     imageAlt,
     placeholderIcon: SPORT_ICONS[sport] ?? "sports",
+  };
+}
+
+export function mapEventToDetail(
+  row: EventDetailQueryRow,
+  options: MapEventOptions,
+): EventDetail {
+  const item = mapEventToItem(row, options);
+
+  return {
+    ...item,
+    description: getDescriptionText(row.description),
+    endDateTime: DATE_TIME_FORMAT.format(new Date(row.end_date)),
+    pointsAwarded: row.points_awarded,
+    maxAttendees: row.max_attendees,
+    attendeeCount: getAttendanceCount(row),
+    host: {
+      name: getHostName(row.host),
+      role: getHostRole(row.host.role),
+    },
+    tags: (row.tags ?? []).map((tag) => tag.title),
   };
 }

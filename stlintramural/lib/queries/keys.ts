@@ -5,7 +5,7 @@ export const queryKeys = {
     byQr: (token: string) => ["users", "qr", token] as const,
   },
   events: {
-    all: (filters: { sport?: string; period?: string }) =>
+    all: (filters: { sport?: string; period?: string; page?: number }) =>
       ["events", filters] as const,
     detail: (id: string) => ["events", id] as const,
     myAttendances: ["events", "my-attendances"] as const,
@@ -18,7 +18,23 @@ export const queryKeys = {
   dashboard: {
     weeklyActivity: (userId: string) =>
       ["dashboard", "weekly-activity", userId] as const,
-    checkInsThisMonth: (userId: string) =>
-      ["dashboard", "check-ins-month", userId] as const,
+    leagueRank: (userId: string) =>
+      ["dashboard", "league-rank", userId] as const,
+    upcomingEvents: (userId: string) =>
+      ["dashboard", "upcoming-events", userId] as const,
+  },
+  leaderboard: {
+    all: ["leaderboard"] as const,
+  },
+  admin: {
+    stats: ["admin", "stats"] as const,
+    recentActivity: ["admin", "recent-activity"] as const,
+    users: (page: number) => ["admin", "users", page] as const,
+    userDetail: (userId: string) => ["admin", "users", "detail", userId] as const,
+    events: (page: number) => ["admin", "events", page] as const,
+  },
+  scan: {
+    events: ["scan", "events"] as const,
+    recent: (eventId: string) => ["scan", "recent", eventId] as const,
   },
 } as const;

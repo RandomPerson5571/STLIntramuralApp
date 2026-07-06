@@ -1,6 +1,25 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export interface ShopItemDisplay {
+import { mapShopItemToDisplay, shopItemIcon } from "@/lib/mappers/shop";
+import {
+  buildShopItemDescription,
+  type ShopItemDraft,
+} from "@/lib/shop-create-data";
+import { throwIfError } from "@/lib/queries/utils";
+import type { ShopItemWithSeller } from "@/types/database";
+import type { ShopItemDisplay as ShopPageItem } from "@/types/shop";
+
+export class ShopItemCreateError extends Error {
+  constructor(
+    message: string,
+    public readonly code: "missing_title" | "invalid_cost" | "invalid_stock" | "unknown",
+  ) {
+    super(message);
+    this.name = "ShopItemCreateError";
+  }
+}
+
+export interface ShopItemSummary {
   id: string;
   name: string;
   pointsCost: number;
@@ -8,29 +27,14 @@ export interface ShopItemDisplay {
 }
 
 const SHOP_ITEM_COLUMNS = "id, title, cost, stock, created_at" as const;
+const SHOP_ITEM_WITH_SELLER =
+  "*, seller:users!seller_id(id, first_name, last_name, role)" as const;
 
-function shopItemIcon(title: string): string {
-  const t = title.toLowerCase();
-  if (t.includes("hoodie") || t.includes("shirt") || t.includes("jersey")) {
-    return "checkroom";
-  }
-  if (t.includes("water") || t.includes("bottle")) {
-    return "water_drop";
-  }
-  if (t.includes("hat") || t.includes("cap")) {
-    return "styler";
-  }
-  if (t.includes("bag") || t.includes("backpack")) {
-    return "backpack";
-  }
-  return "redeem";
-}
-
-function mapShopItem(row: {
+function mapFeaturedShopItem(row: {
   id: string;
   title: string;
   cost: number;
-}): ShopItemDisplay {
+}): ShopItemSummary {
   return {
     id: row.id,
     name: row.title,
@@ -39,9 +43,24 @@ function mapShopItem(row: {
   };
 }
 
+export async function fetchShopItems(
+  supabase: SupabaseClient,
+): Promise<ShopPageItem[]> {
+  const { data, error } = await supabase
+    .from("shop_items")
+    .select(SHOP_ITEM_WITH_SELLER)
+    .order("created_at", { ascending: false });
+
+  throwIfError(error);
+
+  return (data ?? []).map((row) =>
+    mapShopItemToDisplay(row as ShopItemWithSeller),
+  );
+}
+
 export async function fetchFeaturedShopItems(
   supabase: SupabaseClient,
-): Promise<ShopItemDisplay[]> {
+): Promise<ShopItemSummary[]> {
   const { data, error } = await supabase
     .from("shop_items")
     .select(SHOP_ITEM_COLUMNS)
@@ -49,11 +68,9 @@ export async function fetchFeaturedShopItems(
     .order("created_at", { ascending: false })
     .limit(2);
 
-  if (error) {
-    throw error;
-  }
+  throwIfError(error);
 
-  return (data ?? []).map(mapShopItem);
+  return (data ?? []).map(mapFeaturedShopItem);
 }
 
 export async function fetchCheapestShopItemCost(
@@ -67,9 +84,51 @@ export async function fetchCheapestShopItemCost(
     .limit(1)
     .maybeSingle();
 
-  if (error) {
-    throw error;
-  }
+  throwIfError(error);
 
   return data?.cost ?? null;
+}
+
+export async function createShopItem(
+  supabase: SupabaseClient,
+  input: { sellerId: string; draft: ShopItemDraft },
+): Promise<string> {
+  const title = input.draft.title.trim();
+  if (!title) {
+    throw new ShopItemCreateError("Item title is required.", "missing_title");
+  }
+
+  if (!Number.isFinite(input.draft.cost) || input.draft.cost <= 0) {
+    throw new ShopItemCreateError(
+      "Point cost must be greater than zero.",
+      "invalid_cost",
+    );
+  }
+
+  if (!Number.isFinite(input.draft.stock) || input.draft.stock < 0) {
+    throw new ShopItemCreateError(
+      "Stock cannot be negative.",
+      "invalid_stock",
+    );
+  }
+
+  const { data, error } = await supabase
+    .from("shop_items")
+    .insert({
+      seller_id: input.sellerId,
+      title,
+      description: buildShopItemDescription(input.draft),
+      cost: input.draft.cost,
+      stock: input.draft.stock,
+    })
+    .select("id")
+    .single();
+
+  throwIfError(error);
+
+  if (!data) {
+    throw new Error("Expected shop item row after insert");
+  }
+
+  return data.id;
 }

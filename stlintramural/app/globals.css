@@ -55,6 +55,7 @@
   --font-headline-md: var(--font-bebas-neue), sans-serif;
   --font-body-lg: var(--font-plus-jakarta), sans-serif;
   --font-body-md: var(--font-plus-jakarta), sans-serif;
+  --font-body-sm: var(--font-plus-jakarta), sans-serif;
   --font-label-sm: var(--font-jetbrains-mono), monospace;
 
   --text-display-xl: 72px;
@@ -67,11 +68,16 @@
   --text-headline-md: 24px;
   --text-headline-md--line-height: 1.2;
   --text-body-lg: 18px;
-  --text-body-lg--line-height: 1.6;
+  --text-body-lg--line-height: 1.5;
   --text-body-md: 16px;
-  --text-body-md--line-height: 1.5;
+  --text-body-md--line-height: 1.45;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 1.45;
   --text-label-sm: 12px;
   --text-label-sm--line-height: 1;
+
+  --leading-normal: 1.45;
+  --leading-relaxed: 1.5;
 
   --spacing-base: 4px;
   --spacing-xs: 8px;
@@ -134,4 +140,12 @@ body {
   background: var(--color-surface);
   color: var(--color-on-surface);
   font-family: var(--font-body-md);
+  font-size: var(--text-body-md);
+  line-height: var(--text-body-md--line-height);
+}
+
+@layer base {
+  p {
+    text-wrap: pretty;
+  }
 }

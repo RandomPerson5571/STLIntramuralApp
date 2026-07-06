@@ -1,6 +1,6 @@
 "use client";
 
-import { useInfiniteQuery, useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { queryCache } from "@/lib/queries/cache";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -15,6 +15,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 export interface UseEventsFilters {
   sport: SportFilter;
   period: TimePeriod;
+  page: number;
 }
 
 export function useMyEventAttendances() {
@@ -39,22 +40,20 @@ export function useEvents(filters: UseEventsFilters) {
 
   const canFetchEvents = !user || attendancesFetched;
 
-  return useInfiniteQuery({
+  return useQuery({
     queryKey: queryKeys.events.all({
       sport: filters.sport,
       period: filters.period,
+      page: filters.page,
     }),
-    queryFn: ({ pageParam }) =>
+    queryFn: () =>
       fetchEvents(supabase, {
         sport: filters.sport,
         period: filters.period,
-        page: pageParam,
+        page: filters.page,
         pageSize: DEFAULT_EVENTS_PAGE_SIZE,
         registeredEventIds: registeredEventIds ?? new Set(),
       }),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
-      lastPage.hasMore ? lastPageParam + 1 : undefined,
     enabled: canFetchEvents,
     ...queryCache.events,
     placeholderData: keepPreviousData,

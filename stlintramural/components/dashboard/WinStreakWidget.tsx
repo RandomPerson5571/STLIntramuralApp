@@ -2,7 +2,7 @@
 
 import MaterialSymbol from "@/components/events/MaterialSymbol";
 import DashboardWidget from "@/components/dashboard/DashboardWidget";
-import { WIN_STREAK } from "@/lib/dashboard-data";
+import { WIN_STREAK } from "@/lib/constants/dashboard";
 
 export default function WinStreakWidget({ index }: { index: number }) {
   return (

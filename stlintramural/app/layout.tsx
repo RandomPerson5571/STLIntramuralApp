@@ -5,6 +5,7 @@ import {
   Plus_Jakarta_Sans,
 } from "next/font/google";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { rootMetadata } from "@/lib/seo";
 import "./globals.css";
 
 const bebasNeue = Bebas_Neue({
@@ -26,8 +27,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "STL Intramural",
-  description: "Play Hard. Win Big.",
+  ...rootMetadata,
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
@@ -50,7 +50,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col text-body-md font-body-md">
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

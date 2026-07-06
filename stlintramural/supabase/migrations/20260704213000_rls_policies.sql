@@ -78,7 +78,6 @@ BEGIN
     IF NEW.auth_id IS DISTINCT FROM OLD.auth_id
       OR NEW.role IS DISTINCT FROM OLD.role
       OR NEW.points_balance IS DISTINCT FROM OLD.points_balance
-      OR NEW.qr_code_token IS DISTINCT FROM OLD.qr_code_token
     THEN
       RAISE EXCEPTION 'Cannot modify protected profile fields';
     END IF;

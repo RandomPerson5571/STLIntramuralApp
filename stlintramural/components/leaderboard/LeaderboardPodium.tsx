@@ -2,12 +2,12 @@
 
 import { motion } from "framer-motion";
 import MaterialSymbol from "@/components/events/MaterialSymbol";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { USER_ROLE_LABELS } from "@/lib/constants/user-labels";
 import {
-  CURRENT_USER_ID,
   formatFullName,
   type LeaderboardEntry,
-} from "@/lib/leaderboard-data";
-import type { UserRole } from "@/types/database/user";
+} from "@/lib/constants/leaderboard";
 
 const PODIUM_CONFIG = {
   1: {
@@ -39,23 +39,19 @@ const PODIUM_CONFIG = {
   },
 } as const;
 
-const ROLE_LABEL: Record<UserRole, string> = {
-  student: "Student",
-  teacher: "Teacher",
-  admin: "Admin",
-};
-
 function PodiumSlot({
   entry,
   place,
   index,
+  currentUserId,
 }: {
   entry: LeaderboardEntry;
   place: 1 | 2 | 3;
   index: number;
+  currentUserId?: string;
 }) {
   const config = PODIUM_CONFIG[place];
-  const isCurrentUser = entry.id === CURRENT_USER_ID;
+  const isCurrentUser = entry.id === currentUserId;
 
   return (
     <motion.div
@@ -88,7 +84,7 @@ function PodiumSlot({
         {formatFullName(entry)}
       </p>
       <p className="text-label-sm font-label-sm uppercase text-on-surface-variant">
-        {ROLE_LABEL[entry.role]}
+        {USER_ROLE_LABELS[entry.role]}
       </p>
       <p className="mt-1 text-headline-md font-headline-md tabular-nums text-primary">
         {entry.points_balance.toLocaleString()}
@@ -114,6 +110,7 @@ interface LeaderboardPodiumProps {
 }
 
 export default function LeaderboardPodium({ entries }: LeaderboardPodiumProps) {
+  const { data: user } = useCurrentUser();
   const topThree = entries.slice(0, 3);
 
   if (topThree.length < 3) return null;
@@ -127,9 +124,9 @@ export default function LeaderboardPodium({ entries }: LeaderboardPodiumProps) {
         aria-hidden
       />
       <div className="relative flex items-end justify-center gap-2 sm:gap-4">
-        <PodiumSlot entry={second} place={2} index={0} />
-        <PodiumSlot entry={first} place={1} index={1} />
-        <PodiumSlot entry={third} place={3} index={2} />
+        <PodiumSlot entry={second} place={2} index={0} currentUserId={user?.id} />
+        <PodiumSlot entry={first} place={1} index={1} currentUserId={user?.id} />
+        <PodiumSlot entry={third} place={3} index={2} currentUserId={user?.id} />
       </div>
     </div>
   );

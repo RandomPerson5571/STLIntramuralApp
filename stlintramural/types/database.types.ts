@@ -73,6 +73,7 @@ export type Database = {
           id: string;
           max_attendees: number | null;
           points_awarded: number;
+          slug: string;
           start_date: string;
           title: string;
         };
@@ -85,6 +86,7 @@ export type Database = {
           id?: string;
           max_attendees?: number | null;
           points_awarded?: number;
+          slug?: string;
           start_date: string;
           title: string;
         };
@@ -97,6 +99,7 @@ export type Database = {
           id?: string;
           max_attendees?: number | null;
           points_awarded?: number;
+          slug?: string;
           start_date?: string;
           title?: string;
         };
@@ -106,6 +109,32 @@ export type Database = {
             columns: ["host_id"];
             isOneToOne: false;
             referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      tags: {
+        Row: {
+          event_id: string;
+          id: string;
+          title: string;
+        };
+        Insert: {
+          event_id: string;
+          id?: string;
+          title: string;
+        };
+        Update: {
+          event_id?: string;
+          id?: string;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tags_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
             referencedColumns: ["id"];
           },
         ];
@@ -247,7 +276,9 @@ export type Database = {
           auth_id: string;
           created_at: string;
           first_name: string;
+          graduation_year: number | null;
           id: string;
+          is_admin: boolean;
           last_name: string;
           points_balance: number;
           qr_code_token: string;
@@ -257,7 +288,9 @@ export type Database = {
           auth_id: string;
           created_at?: string;
           first_name: string;
+          graduation_year?: number | null;
           id?: string;
+          is_admin?: boolean;
           last_name: string;
           points_balance?: number;
           qr_code_token?: string;
@@ -267,7 +300,9 @@ export type Database = {
           auth_id?: string;
           created_at?: string;
           first_name?: string;
+          graduation_year?: number | null;
           id?: string;
+          is_admin?: boolean;
           last_name?: string;
           points_balance?: number;
           qr_code_token?: string;
@@ -280,7 +315,20 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      record_event_check_in: {
+        Args: {
+          p_event_id: string;
+          p_qr_token: string;
+        };
+        Returns: Json;
+      };
+      verify_qr_scan: {
+        Args: {
+          p_event_id: string;
+          p_qr_token: string;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       user_role: "student" | "teacher" | "admin";

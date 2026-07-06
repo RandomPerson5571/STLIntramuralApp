@@ -2,11 +2,11 @@
 
 import { motion } from "framer-motion";
 import MaterialSymbol from "@/components/events/MaterialSymbol";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import {
-  CURRENT_USER_ID,
   formatDisplayName,
   type LeaderboardEntry,
-} from "@/lib/leaderboard-data";
+} from "@/lib/constants/leaderboard";
 import type { UserRole } from "@/types/database/user";
 
 const ROLE_STYLES: Record<UserRole, { badge: string; dot: string }> = {
@@ -36,7 +36,8 @@ interface LeaderboardRowProps {
 }
 
 export default function LeaderboardRow({ entry, index }: LeaderboardRowProps) {
-  const isCurrentUser = entry.id === CURRENT_USER_ID;
+  const { data: user } = useCurrentUser();
+  const isCurrentUser = entry.id === user?.id;
   const roleStyle = ROLE_STYLES[entry.role];
   const trend = TREND_CONFIG[entry.trend];
 

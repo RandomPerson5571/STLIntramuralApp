@@ -39,7 +39,7 @@ export default function LoginForm() {
 
     try {
       await signIn.mutateAsync({ email: email.trim(), password });
-      router.push("/");
+      router.push("/dashboard");
       router.refresh();
     } catch {
       // Error surfaced via signIn.error

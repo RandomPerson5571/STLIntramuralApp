@@ -6,6 +6,7 @@ export type AccentColor = "primary" | "secondary";
 
 export interface EventItem {
   id: string;
+  slug: string;
   title: string;
   sport: string;
   format: string;
@@ -29,4 +30,8 @@ export type SportFilter =
   | "Soccer"
   | "Tennis";
 
-export type TimePeriod = "This Week" | "Next Week" | "This Month";
+export type TimePeriod =
+  | "Upcoming"
+  | "This Week"
+  | "Next Week"
+  | "This Month";

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { isGeoAllowed } from "@/lib/geo";
 import {
   copySessionCookies,
   updateSession,
@@ -9,10 +10,18 @@ const PROTECTED_ROUTES = ["/", "/events"];
 const AUTH_ROUTES = ["/login", "/signup"];
 
 export async function proxy(request: NextRequest) {
-  const { response, user } = await updateSession(request);
   const { pathname } = request.nextUrl;
 
-  if (!user && PROTECTED_ROUTES.includes(pathname)) {
+  if (!isGeoAllowed(request)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/geo-blocked";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
+  const { response, user } = await updateSession(request);
+
+  if (!user && (PROTECTED_ROUTES.includes(pathname) || pathname === "/scan")) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     const redirectResponse = NextResponse.redirect(url);
@@ -22,7 +31,7 @@ export async function proxy(request: NextRequest) {
 
   if (user && AUTH_ROUTES.includes(pathname)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/dashboard";
     const redirectResponse = NextResponse.redirect(url);
     copySessionCookies(response, redirectResponse);
     return redirectResponse;
@@ -32,5 +41,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/events", "/login", "/signup"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|geo-blocked|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };
