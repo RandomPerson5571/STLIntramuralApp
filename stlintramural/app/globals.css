@@ -133,3 +133,65 @@ body {
     text-wrap: pretty;
   }
 }
+
+@layer components {
+  .legal-prose {
+    @apply text-body-md leading-relaxed text-on-surface-variant;
+  }
+
+  .legal-prose > :first-child {
+    @apply mt-0;
+  }
+
+  .legal-prose h2 {
+    @apply mt-lg border-t border-surface-variant/50 pt-md text-headline-md font-headline-md uppercase tracking-wide text-on-surface;
+  }
+
+  .legal-prose h3 {
+    @apply mt-md text-body-lg font-medium text-on-surface;
+  }
+
+  .legal-prose h4 {
+    @apply mt-sm text-body-md font-medium text-on-surface;
+  }
+
+  .legal-prose p {
+    @apply mt-sm;
+  }
+
+  .legal-prose ul {
+    @apply mt-sm list-disc space-y-1.5 pl-5;
+  }
+
+  .legal-prose ul ul {
+    @apply mt-1.5;
+  }
+
+  .legal-prose li {
+    @apply pl-0.5;
+  }
+
+  .legal-prose a {
+    @apply text-primary underline underline-offset-2 transition-colors;
+  }
+
+  .legal-prose a:hover {
+    color: var(--color-primary-container);
+  }
+
+  .legal-prose strong {
+    @apply font-medium text-on-surface;
+  }
+
+  .legal-prose .legal-section {
+    @apply mt-lg border-t border-surface-variant/50 pt-md;
+  }
+
+  .legal-prose .legal-section:first-child {
+    @apply mt-0 border-t-0 pt-0;
+  }
+
+  .legal-prose .legal-section h2 {
+    @apply mt-0 border-t-0 pt-0;
+  }
+}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import StlLogo from "@/components/StlLogo";
 import MaterialSymbol from "@/components/events/MaterialSymbol";
+import SiteFooter from "@/components/layout/SiteFooter";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -127,9 +128,7 @@ export default function LandingPage() {
         </div>
       </main>
 
-      <footer className="relative z-10 shrink-0 border-t border-surface-variant/60 px-margin py-sm text-center text-label-sm font-label-sm uppercase tracking-widest text-on-surface-variant md:px-lg lg:py-xs">
-        Saint Louis University Intramurals
-      </footer>
+      <SiteFooter compact />
     </div>
   );
 }

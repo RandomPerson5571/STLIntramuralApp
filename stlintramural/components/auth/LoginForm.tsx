@@ -192,38 +192,6 @@ export default function LoginForm() {
         </button>
       </form>
 
-      <div className="mt-md">
-        <div className="relative mb-sm flex items-center justify-center">
-          <span className="absolute inset-x-0 h-px bg-surface-variant/60" />
-          <span className="relative bg-surface-container-lowest px-2 text-label-sm font-label-sm uppercase text-outline">
-            Or continue with
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title="SSO is not configured yet"
-            className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-xl border border-surface-variant/70 py-2 text-label-sm font-label-sm uppercase text-on-surface opacity-50"
-          >
-            <MaterialSymbol icon="school" className="text-base" />
-            SSO
-          </button>
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title="Campus ID sign-in is not configured yet"
-            className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-xl border border-surface-variant/70 py-2 text-label-sm font-label-sm uppercase text-on-surface opacity-50"
-          >
-            <MaterialSymbol icon="badge" className="text-base" />
-            Campus ID
-          </button>
-        </div>
-      </div>
-
       <p className="mt-md border-t border-surface-variant/50 pt-md text-center text-body-md text-on-surface-variant">
         Don&apos;t have an account?{" "}
         <Link

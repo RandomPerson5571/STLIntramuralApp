@@ -279,19 +279,19 @@ export default function SignupForm() {
           />
           <span className="text-body-md leading-snug text-on-surface-variant">
             I agree to the{" "}
-            <button
-              type="button"
+            <Link
+              href="/terms-of-service"
               className="text-secondary underline underline-offset-2 transition-colors hover:text-on-secondary-container"
             >
               Terms of Service
-            </button>{" "}
+            </Link>{" "}
             and{" "}
-            <button
-              type="button"
+            <Link
+              href="/privacy-policy"
               className="text-secondary underline underline-offset-2 transition-colors hover:text-on-secondary-container"
             >
               Privacy Policy
-            </button>
+            </Link>
           </span>
         </label>
 
